@@ -1,0 +1,33 @@
+[Unit]
+Description=%p Podman Container
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+TimeoutStartSec=5m
+ExecStartPre=-/usr/bin/podman rm -f %p
+ExecStart=/usr/bin/podman run --name %p \
+      -h %p \
+      -e DB_SERVER_HOST=ocp-helper.ocp4.zyl.io \
+      -e POSTGRES_USER=zabbix \
+      -e POSTGRES_PASSWORD=zabbix \
+      -e POSTGRES_DB=zabbix \
+      -e ZBX_ENABLE_SNMP_TRAPS=true \
+      -e ENABLE_TIMESCALEDB=false \
+      -e ZBX_DEBUGLEVEL=3 \
+      -e ZBX_JAVAGATEWAY_ENABLE=true \
+      -e ZBX_JAVAGATEWAY=ocp-helper.ocp4.zyl.io \
+      -p 10051:10051 \
+      -v /data/zabbix/var-lib/mibs:/var/lib/zabbix/mibs:rw \
+      -v /data/zabbix/var-lib/snmptraps:/var/lib/zabbix/snmptraps:rw \
+      -v /data/zabbix/usr-lib/alertscripts:/usr/lib/zabbix/alertscripts:rw \
+      -v /data/zabbix/usr-lib/externalscripts:/usr/lib/zabbix/externalscripts:rw \
+      zabbix/zabbix-server-pgsql:centos-latest
+ExecReload=-/usr/bin/podman stop %p
+ExecReload=-/usr/bin/podman rm -f %p
+ExecStop=-/usr/bin/podman stop %p
+
+[Install]
+WantedBy=multi-user.target

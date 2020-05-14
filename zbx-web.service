@@ -1,0 +1,25 @@
+[Unit]
+Description=%p Podman Container
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+TimeoutStartSec=5m
+ExecStartPre=-/usr/bin/podman rm -f %p
+ExecStart=/usr/bin/podman run --name %p -h %p \
+      -e DB_SERVER_HOST=ocp-helper.ocp4.zyl.io \
+      -e POSTGRES_USER=zabbix \
+      -e POSTGRES_PASSWORD=zabbix \
+      -e POSTGRES_DB=zabbix \
+      -e ZBX_SERVER_HOST=ocp-helper.ocp4.zyl.io \
+      -p 9080:8080 -p 8443:8443 \
+      -v /data/zabbix/nginx:/etc/ssl/nginx:ro \
+      zabbix/zabbix-web-nginx-pgsql:latest
+ExecReload=-/usr/bin/podman stop %p
+ExecReload=-/usr/bin/podman rm -f %p
+ExecStop=-/usr/bin/podman stop %p
+
+[Install]
+WantedBy=multi-user.target

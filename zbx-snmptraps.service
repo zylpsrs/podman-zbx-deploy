@@ -1,0 +1,21 @@
+[Unit]
+Description=%p Podman Container
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+TimeoutStartSec=5m
+ExecStartPre=-/usr/bin/podman rm -f %p
+ExecStart=/usr/bin/podman run --name %p -h %p \
+      -v /data/zabbix/var-lib/mibs:/var/lib/zabbix/mibs:rw \
+      -v /data/zabbix/var-lib/snmptraps:/var/lib/zabbix/snmptraps:rw \
+      -p 162:1162/udp \
+      zabbix/zabbix-snmptraps:latest
+ExecReload=-/usr/bin/podman stop %p
+ExecReload=-/usr/bin/podman rm -f %p
+ExecStop=-/usr/bin/podman stop %p
+
+[Install]
+WantedBy=multi-user.target

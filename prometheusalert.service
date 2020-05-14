@@ -1,0 +1,20 @@
+[Unit]
+Description=%p Podman Container
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+TimeoutStartSec=5m
+ExecStartPre=-/usr/bin/podman rm -f %p
+ExecStart=/usr/bin/podman run --name %p -h %p \
+        -p 9090:8080 \
+        -v /data/prometheusalert/conf:/app/conf \
+	docker.io/feiyu563/prometheus-alert:latest
+ExecReload=-/usr/bin/podman stop %p
+ExecReload=-/usr/bin/podman rm -f %p
+ExecStop=-/usr/bin/podman stop %p
+
+[Install]
+WantedBy=multi-user.target

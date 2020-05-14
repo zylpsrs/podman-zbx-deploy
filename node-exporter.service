@@ -1,0 +1,30 @@
+[Unit]
+Description=%p Podman Container
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+TimeoutStartSec=5m
+ExecStartPre=-/usr/bin/podman rm -f %p
+ExecStart=/usr/bin/podman run --name %p \
+      --net=host \
+      --pid=host \
+      -v /sys:/host/sys \
+      -v /proc:/host/proc \
+      -v /:/host/root:ro,rslave \
+      -v /data/node_exporter/textfile:/var/node_exporter/textfile:rw \
+      quay.io/prometheus/node-exporter:latest \
+      --path.sysfs=/host/sys \
+      --path.procfs=/host/proc \
+      --path.rootfs=/host/root \
+      --collector.filesystem.ignored-mount-points='^/(dev|proc|sys|var/lib/docker/.+)($|/)' \
+      --collector.filesystem.ignored-fs-types='^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tmpfs|tracefs)$' \
+      --collector.textfile.directory=/var/node_exporter/textfile
+ExecReload=-/usr/bin/podman stop %p
+ExecReload=-/usr/bin/podman rm -f %p
+ExecStop=-/usr/bin/podman stop %p
+
+[Install]
+WantedBy=multi-user.target

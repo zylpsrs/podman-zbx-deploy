@@ -1,0 +1,24 @@
+[Unit]
+Description=%p Podman Container
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+TimeoutStartSec=5m
+ExecStartPre=-/usr/bin/podman rm -f %p
+ExecStart=/usr/bin/podman run --name %p -h %p \
+	--privileged -p 10050:10050 \
+	-e ZBX_SERVER_HOST=ocp-helper.ocp4.zyl.io \
+	-e ZBX_SERVER_PORT=10051 \
+        -e ZBX_PASSIVESERVERS=10.88.0.0/16,ocp-helper.ocp4.zyl.io \
+	-v /data/zabbix/var-lib:/var/lib/zabbix:rw \
+        -v /data/zabbix/etc/zabbix_agentd.d:/etc/zabbix/zabbix_agentd.d:ro \
+	zabbix/zabbix-agent2:latest
+ExecReload=-/usr/bin/podman stop %p
+ExecReload=-/usr/bin/podman rm -f %p
+ExecStop=-/usr/bin/podman stop %p
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,23 @@
+[Unit]
+Description=%p Podman Container
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+TimeoutStartSec=5m
+ExecStartPre=-/usr/bin/podman rm -f %p
+ExecStart=/usr/bin/podman run --name %p -h %p \
+      -p 5432:5432 \
+      -e POSTGRES_USER="zabbix" \
+      -e POSTGRES_PASSWORD="zabbix" \
+      -e POSTGRES_DB="zabbix" \
+      -v /data/zabbix/zbx-pgsql/data:/var/lib/postgresql/data:z \
+      postgres:latest
+ExecReload=-/usr/bin/podman stop %p
+ExecReload=-/usr/bin/podman rm -f %p
+ExecStop=-/usr/bin/podman stop %p
+
+[Install]
+WantedBy=multi-user.target
